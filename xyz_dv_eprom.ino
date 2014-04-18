@@ -314,7 +314,7 @@ static void dump_eeprom(word address,word length)
 
 int led = 13;
 // Value to write to the EEPROM for remaining filament lenght
-char x[] = {0x3f,0x42,0x0f,0x00};
+char x[] = {0x80,0xa9,0x03,0x00};
   
 byte sr;
 NanodeUNIO unio(NANODE_MAC_DEVICE);
@@ -335,15 +335,16 @@ void loop() {
   Serial.println("Da Vinci EEPROM found...");
   Serial.println("Reading the Davinci EEPROM Contents...");
   dump_eeprom(0,128);
-  //dump_eeprom(52,3);
+  //dump_eeprom(116,4);
  
   Serial.println("Updating EEPROM...");
   status(unio.simple_write((const byte *)x,52,4));
+  status(unio.simple_write((const byte *)x,116,4));
 
   Serial.println("Dumping Content after modification...");
   dump_eeprom(0,128);
  
   digitalWrite(led, HIGH);   // turn the LED on
-  delay(2000);               // wait for two seconds 
+  delay(10000);               // wait for two seconds 
 }
 
