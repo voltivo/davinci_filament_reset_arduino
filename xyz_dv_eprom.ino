@@ -314,7 +314,10 @@ static void dump_eeprom(word address,word length)
 
 int led = 13;
 // Value to write to the EEPROM for remaining filament lenght
-char x[] = {0x80,0xa9,0x03,0x00};
+//240m
+//char x[] = {0x80,0xa9,0x03,0x00};
+//120m
+char x[] = {0xc0,0xd4,0x01,0x00};
   
 byte sr;
 NanodeUNIO unio(NANODE_MAC_DEVICE);
