@@ -317,8 +317,16 @@ int led = 13;
 //240m
 //char x[] = {0x80,0xa9,0x03,0x00};
 //120m
-char x[] = {0xc0,0xd4,0x01,0x00};
-  
+//char x[] = {0xc0,0xd4,0x01,0x00};
+//400m
+char x[] = {0x80,0x1a,0x06,0x00};
+
+// extruder temp
+//char et[] = {0xd2,0x00}; // 210 C 
+char et[] = {0xe6,0x00}; // 230 C
+// bed temp 90 degrees, default is 0x5a00
+char bt[] = {0x5a,0x00};
+
 byte sr;
 NanodeUNIO unio(NANODE_MAC_DEVICE);
   
@@ -341,8 +349,17 @@ void loop() {
   //dump_eeprom(116,4);
  
   Serial.println("Updating EEPROM...");
+  status(unio.simple_write((const byte *)x,8,4));
+  status(unio.simple_write((const byte *)x,12,4));
+  status(unio.simple_write((const byte *)et,16,2)); // extruder temp
+  status(unio.simple_write((const byte *)bt,18,2)); // bed temp
   status(unio.simple_write((const byte *)x,52,4));
-  status(unio.simple_write((const byte *)x,116,4));
+  // same block from offset 0 is offset 64 bytes
+  status(unio.simple_write((const byte *)x,64 + 8,4));
+  status(unio.simple_write((const byte *)x,64 + 12,4));
+  status(unio.simple_write((const byte *)et,64 + 16,2)); // extruder temp
+  status(unio.simple_write((const byte *)bt,64 + 18,2)); // bed temp
+  status(unio.simple_write((const byte *)x,64 + 52,4));
 
   Serial.println("Dumping Content after modification...");
   dump_eeprom(0,128);
