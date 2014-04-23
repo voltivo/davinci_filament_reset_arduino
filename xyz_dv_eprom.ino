@@ -313,18 +313,28 @@ static void dump_eeprom(word address,word length)
 }
 
 int led = 13;
+/*
+These are the values to be written to the EEPROM
+Make sure only one is uncommented.
+By default its set for the starter ABS cartdridge with 120m of filament 
+
+Verified with firmware 1.1.I
+*/
+
 // Value to write to the EEPROM for remaining filament lenght
-//240m
-//char x[] = {0x80,0xa9,0x03,0x00};
+// Default Starter Cartdridge is 120m
 //120m
 char x[] = {0xc0,0xd4,0x01,0x00};
+//240m
+//char x[] = {0x80,0xa9,0x03,0x00};
 //400m
 //char x[] = {0x80,0x1a,0x06,0x00};
 
-// extruder temp
+// extruder temp, default is 210 C for ABS
 char et[] = {0xd2,0x00}; // 210 C 
 //char et[] = {0xe6,0x00}; // 230 C
-// bed temp 90 degrees, default is 0x5a00
+
+// bed temp 90 degrees, default ABS
 char bt[] = {0x5a,0x00};
 
 byte sr;
