@@ -1,6 +1,7 @@
 /*
 
 Da Vinci EEPROM update Copyright (C) 2014 by Oliver Fueckert <oliver@voltivo.com>
+Increment Serial code - contributed by Matt
 UNI/O Library Copyright (C) 2011 by Stephen Early <steve@greenend.org.uk>
 
 Permission is hereby granted, free of charge, to any person obtaining
@@ -33,6 +34,30 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 
 #define NANODE_MAC_DEVICE 0xa0
 #define NANODE_MAC_ADDRESS 0xfa
+
+#define CODE 0x00 //1 Byte
+#define MATERIAL 0x01 //1 Byte
+#define COLOR 0x02  //2 Bytes
+#define DATE 0x05	//4 Bytes
+#define TOTALLEN 0x08 //4 Bytes
+#define NEWLEN 0x0C //4 Bytes
+#define HEADTEMP 0x10	//2 Bytes
+#define BEDTEMP 0x12	//2Bytes
+#define MLOC 0x14	//2 Bytes
+#define DLOC 0x16	//2 Bytes
+#define SN 0x18		//12 Bytes
+#define CRC 0x24	//2 Bytes
+#define LEN2 0x34	//4 Bytes
+
+void IncrementSerial(unsigned char * cArray, long lAddress, long lSize)
+{
+	unsigned char szTempBuffer[20] = {0};
+	memcpy(szTempBuffer,&cArray[lAddress],lSize);
+	long lSerial = atol((char *)szTempBuffer);
+	lSerial++;
+	sprintf((char *)szTempBuffer,"%04d",lSerial);
+	memcpy(&cArray[lAddress],szTempBuffer,lSize);
+}
 
 class NanodeUNIO {
  private:
@@ -313,6 +338,7 @@ static void dump_eeprom(word address,word length)
 }
 
 int led = 13;
+
 /*
 These are the values to be written to the EEPROM
 Make sure only one is uncommented.
@@ -323,16 +349,15 @@ Verified with firmware 1.1.I
 
 // Value to write to the EEPROM for remaining filament lenght
 // Default Starter Cartdridge is 120m
-//120m
-char x[] = {0xc0,0xd4,0x01,0x00};
-//240m
-//char x[] = {0x80,0xa9,0x03,0x00};
-//400m
-//char x[] = {0x80,0x1a,0x06,0x00};
+char x[] = {0xc0,0xd4,0x01,0x00}; //120m
+//char x[] = {0x80,0xa9,0x03,0x00}; //240m
+//char x[] = {0x80,0x1a,0x06,0x00}; //400m
 
 // extruder temp, default is 210 C for ABS
 char et[] = {0xd2,0x00}; // 210 C 
 //char et[] = {0xe6,0x00}; // 230 C
+//char et[] = {0xf5,0x00}; // 245 C
+//char et[] = {0xfa,0x00}; // 250 C
 
 // bed temp 90 degrees, default ABS
 char bt[] = {0x5a,0x00};
@@ -357,19 +382,30 @@ void loop() {
   Serial.println("Reading the Davinci EEPROM Contents...");
   dump_eeprom(0,128);
   //dump_eeprom(116,4);
+	
+  //Read the serial number - added by Matt
+  byte buf[20];
+  memset(buf,0,20);
+  status(unio.read(buf,SN,12));
+  //Increment the serial number
+  IncrementSerial(&buf[0], 0, 12);	
  
   Serial.println("Updating EEPROM...");
-  status(unio.simple_write((const byte *)x,8,4));
-  status(unio.simple_write((const byte *)x,12,4));
-  status(unio.simple_write((const byte *)et,16,2)); // extruder temp
-  status(unio.simple_write((const byte *)bt,18,2)); // bed temp
-  status(unio.simple_write((const byte *)x,52,4));
+  status(unio.simple_write((const byte *)x,TOTALLEN,4));
+  status(unio.simple_write((const byte *)x,NEWLEN,4));
+  status(unio.simple_write((const byte *)et,HEADTEMP,2)); // extruder temp
+  status(unio.simple_write((const byte *)bt,BEDTEMP,2)); // bed temp
+  //Write the serial number
+  status(unio.simple_write((const byte *)buf,SN,12)); //Serial Number
+  status(unio.simple_write((const byte *)x,LEN2,4));
   // same block from offset 0 is offset 64 bytes
-  status(unio.simple_write((const byte *)x,64 + 8,4));
-  status(unio.simple_write((const byte *)x,64 + 12,4));
-  status(unio.simple_write((const byte *)et,64 + 16,2)); // extruder temp
-  status(unio.simple_write((const byte *)bt,64 + 18,2)); // bed temp
-  status(unio.simple_write((const byte *)x,64 + 52,4));
+  status(unio.simple_write((const byte *)x,64 + TOTALLEN,4));
+  status(unio.simple_write((const byte *)x,64 + NEWLEN,4));
+  status(unio.simple_write((const byte *)et,64 + HEADTEMP,2)); // extruder temp
+  status(unio.simple_write((const byte *)bt,64 + BEDTEMP,2)); // bed temp
+   //Write the serial number
+  status(unio.simple_write((const byte *)buf,64 + SN,12)); //Serial Number
+  status(unio.simple_write((const byte *)x,64 + LEN2,4));
 
   Serial.println("Dumping Content after modification...");
   dump_eeprom(0,128);
