@@ -366,6 +366,7 @@ byte sr;
 NanodeUNIO unio(NANODE_MAC_DEVICE);
   
 void setup() {
+  pinMode(13, OUTPUT)
   Serial.begin(115200);
 }
 
