@@ -344,23 +344,27 @@ These are the values to be written to the EEPROM
 Make sure only one is uncommented.
 By default its set for the starter ABS cartdridge with 120m of filament 
 
-Verified with firmware 1.1.I
+Verified with firmware 1.1.J
 */
 
 // Value to write to the EEPROM for remaining filament lenght
 // Default Starter Cartdridge is 120m
-char x[] = {0xc0,0xd4,0x01,0x00}; //120m
-//char x[] = {0x80,0xa9,0x03,0x00}; //240m
+//char x[] = {0xc0,0xd4,0x01,0x00}; //120m
+  char x[] = {0x80,0xa9,0x03,0x00}; //240m
 //char x[] = {0x80,0x1a,0x06,0x00}; //400m
 
 // extruder temp, default is 210 C for ABS
-char et[] = {0xd2,0x00}; // 210 C 
+  char et[] = {0xd2,0x00}; // 210 C 
+//char et[] = {0xdc,0x00}; // 220 C
 //char et[] = {0xe6,0x00}; // 230 C
+//char et[] = {0xf0,0x00}; // 240 C
 //char et[] = {0xf5,0x00}; // 245 C
 //char et[] = {0xfa,0x00}; // 250 C
 
 // bed temp 90 degrees, default ABS
-char bt[] = {0x5a,0x00};
+  char bt[] = {0x5a,0x00}; //90 C
+//char bt[] = {0x64,0x00}; //100 C
+//char bt[] = {0x6e,0x00}; //110 C
 
 byte sr;
 NanodeUNIO unio(NANODE_MAC_DEVICE);
@@ -414,4 +418,3 @@ void loop() {
   digitalWrite(led, HIGH);   // turn the LED on
   delay(10000);               // wait for two seconds 
 }
-
