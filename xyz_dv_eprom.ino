@@ -347,6 +347,11 @@ By default its set for the starter ABS cartdridge with 120m of filament
 Verified with firmware 1.1.I
 */
 
+// Material type (ABS or PLA)
+// Default is ABS
+char m[] = {0x41}; // A = ABS
+// char m[] = {0x50}; // P = PLA
+
 // Value to write to the EEPROM for remaining filament lenght
 // Default Starter Cartdridge is 120m
 char x[] = {0xc0,0xd4,0x01,0x00}; //120m
@@ -366,7 +371,7 @@ byte sr;
 NanodeUNIO unio(NANODE_MAC_DEVICE);
   
 void setup() {
-  pinMode(13, OUTPUT)
+  pinMode(13, OUTPUT);
   Serial.begin(115200);
 }
 
@@ -392,6 +397,7 @@ void loop() {
   IncrementSerial(&buf[0], 0, 12);	
  
   Serial.println("Updating EEPROM...");
+  status(unio.simple_write((const byte *)m,MATERIAL,1));
   status(unio.simple_write((const byte *)x,TOTALLEN,4));
   status(unio.simple_write((const byte *)x,NEWLEN,4));
   status(unio.simple_write((const byte *)et,HEADTEMP,2)); // extruder temp
@@ -400,6 +406,7 @@ void loop() {
   status(unio.simple_write((const byte *)buf,SN,12)); //Serial Number
   status(unio.simple_write((const byte *)x,LEN2,4));
   // same block from offset 0 is offset 64 bytes
+  status(unio.simple_write((const byte *)m,64 + MATERIAL,1));
   status(unio.simple_write((const byte *)x,64 + TOTALLEN,4));
   status(unio.simple_write((const byte *)x,64 + NEWLEN,4));
   status(unio.simple_write((const byte *)et,64 + HEADTEMP,2)); // extruder temp
