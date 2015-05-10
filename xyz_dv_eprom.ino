@@ -38,9 +38,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 #define CODE 0x00 //1 Byte
 #define MATERIAL 0x01 //1 Byte
 #define COLOR 0x02  //2 Bytes
-#define DATE 0x05	//4 Bytes
+#define DATE 0x05 //4 Bytes Part of serial number
 #define TOTALLEN 0x08 //4 Bytes
-#define NEWLEN 0x0C //4 Bytes
+#define NEWLEN 0x0C //4 Bytes Copy of starter length
 #define HEADTEMP 0x10	//2 Bytes
 #define BEDTEMP 0x12	//2Bytes
 #define MLOC 0x14	//2 Bytes
@@ -48,6 +48,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 #define SN 0x18		//12 Bytes
 #define CRC 0x24	//2 Bytes
 #define LEN2 0x34	//4 Bytes
+#define EOFM 0x38       //4 Bytes
+#define SCODE 0x3C      //4 Bytes
 
 void IncrementSerial(unsigned char * cArray, long lAddress, long lSize)
 {
@@ -361,6 +363,12 @@ char et[] = {0xd2,0x00}; // 210 C
 
 // bed temp 90 degrees, default ABS
 char bt[] = {0x5a,0x00};
+char cc[] = {
+  0x07,0x83,0x0A,0x00}; // Need more data on this, may designate supplier <- This code appears on numerous colours (600g) and on some starter cartridges (300g) so should work
+char ef[] = {
+  0xAA,0x55,0xAA,0x55};
+char cr[] = {
+  0x57,0x00}; // COLOUR - White  [Blue-0x42,0x00 Green-0x47,0x00 Black-0x4B,0x00 Red-0x52,0x00 Yellow-0x59,0x00 VirginViolet-0x43,0x00]
 
 byte sr;
 NanodeUNIO unio(NANODE_MAC_DEVICE);
@@ -392,6 +400,7 @@ void loop() {
   IncrementSerial(&buf[0], 0, 12);	
  
   Serial.println("Updating EEPROM...");
+  status(unio.simple_write((const byte *)cr,COLOR,2));
   status(unio.simple_write((const byte *)x,TOTALLEN,4));
   status(unio.simple_write((const byte *)x,NEWLEN,4));
   status(unio.simple_write((const byte *)et,HEADTEMP,2)); // extruder temp
@@ -399,7 +408,10 @@ void loop() {
   //Write the serial number
   status(unio.simple_write((const byte *)buf,SN,12)); //Serial Number
   status(unio.simple_write((const byte *)x,LEN2,4));
+  status(unio.simple_write((const byte *)ef,EOFM,4));
+  status(unio.simple_write((const byte *)cc,SCODE,4));
   // same block from offset 0 is offset 64 bytes
+  status(unio.simple_write((const byte *)cr,64 + COLOR,2));
   status(unio.simple_write((const byte *)x,64 + TOTALLEN,4));
   status(unio.simple_write((const byte *)x,64 + NEWLEN,4));
   status(unio.simple_write((const byte *)et,64 + HEADTEMP,2)); // extruder temp
@@ -407,6 +419,8 @@ void loop() {
    //Write the serial number
   status(unio.simple_write((const byte *)buf,64 + SN,12)); //Serial Number
   status(unio.simple_write((const byte *)x,64 + LEN2,4));
+  status(unio.simple_write((const byte *)ef,64 + EOFM,4));
+  status(unio.simple_write((const byte *)cc,64 + SCODE,4));
 
   Serial.println("Dumping Content after modification...");
   dump_eeprom(0,128);
