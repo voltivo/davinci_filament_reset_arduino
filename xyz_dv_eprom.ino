@@ -93,15 +93,37 @@ class NanodeUNIO {
 #define UNIO_THDR    5
 #define UNIO_QUARTER_BIT 10
 #define UNIO_FUDGE_FACTOR 5
-#define UNIO_OUTPUT() do { DDRD |= 0x80; } while (0)
-#define UNIO_INPUT() do { DDRD &= 0x7f; } while (0)
+
+#if defined(__AVR__)
+  #define UNIO_OUTPUT() do { DDRD |= 0x80; } while (0)
+  #define UNIO_INPUT() do { DDRD &= 0x7f; } while (0)
+#else
+  #define UNIO_PIN  10
+  #define UNIO_OUTPUT() pinMode(UNIO_PIN, OUTPUT)
+  #define UNIO_INPUT() pinMode(UNIO_PIN, INPUT);
+
+void sei() {
+  enableInterrupts();
+}
+void cli() {
+  disableInterrupts();
+}
+#endif
 
 static void set_bus(boolean state) {
+#if defined(__AVR__)
   PORTD=(PORTD&0x7f)|(!!state)<<7;
+#else
+  digitalWrite(UNIO_PIN, state);
+#endif
 }
 
 static boolean read_bus(void) {
+#if defined(__AVR__)
   return !!(PIND&0x80);
+#else
+  return digitalRead(UNIO_PIN);
+#endif
 }
 static void unio_inter_command_gap(void) {
   set_bus(1);
@@ -337,7 +359,7 @@ static void dump_eeprom(word address,word length)
   }
 }
 
-int led = 13;
+int led = LED_BUILTIN;
 
 /*
 These are the values to be written to the EEPROM
@@ -366,8 +388,10 @@ byte sr;
 NanodeUNIO unio(NANODE_MAC_DEVICE);
   
 void setup() {
-  pinMode(13, OUTPUT);
+  pinMode(led, OUTPUT);
   Serial.begin(115200);
+  while(!Serial);
+  delay(250);
 }
 
 void loop() {
@@ -390,7 +414,11 @@ void loop() {
   status(unio.read(buf,SN,12));
   //Increment the serial number
   IncrementSerial(&buf[0], 0, 12);	
- 
+
+  Serial.println("Press enter to update EEPROM...");
+  while(!Serial.available());
+  while(Serial.available()) Serial.read();
+  
   Serial.println("Updating EEPROM...");
   status(unio.simple_write((const byte *)x,TOTALLEN,4));
   status(unio.simple_write((const byte *)x,NEWLEN,4));
@@ -412,6 +440,6 @@ void loop() {
   dump_eeprom(0,128);
  
   digitalWrite(led, HIGH);   // turn the LED on
-  delay(10000);               // wait for two seconds 
+  delay(10000);              // wait for ten seconds 
 }
 
