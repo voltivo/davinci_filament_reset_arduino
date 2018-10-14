@@ -382,7 +382,16 @@ char et[] = {0xd2,0x00}; // 210 C
 //char et[] = {0xfa,0x00}; // 250 C
 
 // bed temp 90 degrees, default ABS
-char bt[] = {0x5a,0x00};
+char bt[] = {0x5a,0x00}; //90C
+//char bt[] = {0x32,0x00}; //50C
+//char bt[] = {0x28,0x00}; //40C
+
+//Materials
+
+//char mt[] = {0x41}; //ABS
+//char mt[] = {0x50}; //PLA
+char mt[] = {0x46}; //Flex
+
 
 byte sr;
 NanodeUNIO unio(NANODE_MAC_DEVICE);
@@ -424,6 +433,8 @@ void loop() {
   status(unio.simple_write((const byte *)x,NEWLEN,4));
   status(unio.simple_write((const byte *)et,HEADTEMP,2)); // extruder temp
   status(unio.simple_write((const byte *)bt,BEDTEMP,2)); // bed temp
+  status(unio.simple_write((const byte *)mt,MATERIAL,1)); // Material
+  
   //Write the serial number
   status(unio.simple_write((const byte *)buf,SN,12)); //Serial Number
   status(unio.simple_write((const byte *)x,LEN2,4));
@@ -432,6 +443,7 @@ void loop() {
   status(unio.simple_write((const byte *)x,64 + NEWLEN,4));
   status(unio.simple_write((const byte *)et,64 + HEADTEMP,2)); // extruder temp
   status(unio.simple_write((const byte *)bt,64 + BEDTEMP,2)); // bed temp
+  status(unio.simple_write((const byte *)mt,64 + MATERIAL,1)); // Material
    //Write the serial number
   status(unio.simple_write((const byte *)buf,64 + SN,12)); //Serial Number
   status(unio.simple_write((const byte *)x,64 + LEN2,4));
