@@ -370,6 +370,31 @@ static void dump_eeprom(word address,word length)
   }
 }
 
+int AskQuestion( int [], int ); // appears strange; array and size
+
+int AskQuestion(String Question, int ValidResponces[]){
+  bool askq = true;
+  while(true){
+     if(askq){     
+        Serial.println(Question);     
+     }else{
+      askq=true;
+     }
+     while(!Serial.available());
+     int rp = Serial.parseInt();
+     if(rp == 0) {askq = false; continue;}//PREVENT LINE RETRUN FROM INTERFERING 
+        
+     for(int i=0; i<=sizeof(ValidResponces)+1; i++){        
+        
+        if(i == rp){
+          delay(100);
+          return i; 
+        }
+     }
+     Serial.println("Invalid responce! Please try again!\n");
+  }  
+}
+
 int led = LED_BUILTIN;
 
 /*
@@ -379,6 +404,10 @@ By default its set for the starter ABS cartdridge with 120m of filament
 
 Verified with firmware 1.1.I
 */
+
+//IF YOU WOULD LIKE TO BE PROMPTED INSTEAD OF CHANGING VARIBLES SET THIS TO TRUE
+//GOES THROUGH A PROMPT OVER THE SERIAL INTERFACE ASKING FOR THE USERS PREFRENCES
+bool UseSerialSetup = false;
 
 // Value to write to the EEPROM for remaining filament lenght
 // Default Starter Cartdridge is 120m
@@ -412,6 +441,111 @@ void setup() {
   Serial.begin(115200);
   while(!Serial);
   delay(250);
+
+  if(UseSerialSetup){        
+    int Responces[] = {1,2,3};
+    
+    //ASK WHAT LENGTH CARTIAGE THE USER WANTS
+    int fl = AskQuestion("How much filament do you want the catridage to have? Enter an option 1-3\n1-120M\n2-240M\n3-400M", Responces);
+    switch(fl){
+      case 1:
+        //120m
+        Serial.println("120 meters Selected");
+        x[0] = 0xc0; x[1] = 0xd4; x[2] = 0x01; x[3] = 0x00;
+        break;
+      case 2:        
+        //240m
+        Serial.println("240 meters Selected");
+        x[0] = 0x80; x[1] = 0xa9; x[2] = 0x03; x[3] = 0x00;
+        break;
+      case 3: 
+         //400m       
+         Serial.println("400 meters Selected");
+         x[0] = 0x80; x[1] = 0x1a; x[2] = 0x06; x[3] = 0x00;
+        break;     
+    }
+    
+  
+    //ASK FILAMENT TYPE 
+    Serial.println("===========================================\n\n"); 
+    fl = AskQuestion("What kind of filament do you wish to use\n1-ABS\n2-PLA\n3-Flex", Responces);
+    switch(fl){
+      case 1:
+      Serial.println("ABS Selected");
+        mt[0] = 0x41; //ABS        
+        break;
+      case 2:        
+        Serial.println("PLA Selected");
+        mt[0] = 0x50; //PLA
+        break;
+      case 3:        
+        Serial.println("FLEX Selected");
+         mt[0] = 0x46; //Flex
+        break;      
+    }
+        
+    //BASED ON FILAMENT TYPE OFFER TEMP SELECTIONS
+    Serial.println("===========================================\n\n"); 
+    if(mt[0] == 0x41 || mt[0] == 0x46){
+      //IF ABS
+      int Responces2[] = {1,2,3,4};    
+      fl = AskQuestion("What do you want your extruder temp to be\n1-210C(default)\n2-230C\n3-245C\n4-250C", Responces2);
+      switch(fl){
+        case 1:          
+          Serial.println("210C Extruder Temp Selected");
+          et[0] = 0xd2;
+          break;
+        case 2:
+          Serial.println("230C Extruder Temp Selected");
+          et[0] = 0xe6;
+          break;
+        case 3:
+          Serial.println("245C Extruder Temp Selected");
+          et[0] = 0xf5;
+          break;
+        case 4:
+          Serial.println("250C Extruder Temp Selected");
+          et[0] = 0xfa;
+          break;
+      }
+    }else if (mt[0] == 0x50){
+      //IF PLA
+      int Responces2[] = {1,2};    
+      fl = AskQuestion("What do you want your extruder temp to be\n1-190C(default)\n2-200C", Responces2);
+      switch(fl){
+        case 1:
+          Serial.println("190C Extruder Temp Selected");
+          et[0] = 0xBE;
+          break;
+        case 2:
+          Serial.println("200C Extruder Temp Selected");
+          et[0] = 0xC8;
+          break;      
+      }
+    }
+
+    //ASK BED TEMP
+    Serial.println("===========================================\n\n"); 
+    fl = AskQuestion("What kind of filament do you wish to use\n1-90C(default)\n2-50C\n3-40C", Responces);
+    switch(fl){
+      case 1:
+        Serial.println("90C Bed Temp Selected");
+        bt[0] = 0x5a; //90C       
+        break;
+      case 2:        
+        Serial.println("50C Bed Temp Selected");
+        bt[0] = 0x32; //50C
+        break;
+      case 3:        
+         Serial.println("40C Bed Temp Selected");
+         bt[0] = 0x28; //40C
+        break;      
+    }
+    Serial.println("\n\nSETUP COMPLETE PRESS ANY KEY TO GET STARTED");
+    int rp = Serial.read();
+    while(!Serial.available());
+  }
+  
 }
 
 void loop() {
